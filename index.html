@@ -1,0 +1,360 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.db{padding:1rem 0;max-width:680px}
+.top-bar{background:#1F5FA6;border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+.top-bar h1{font-size:15px;font-weight:500;color:#fff}
+.top-bar .meta{font-size:11px;color:#B5D4F4}
+.filter-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-bar select{font-size:12px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1rem}
+.kpi{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.kpi .lbl{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.kpi .val{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.kpi .sub{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.kpi.blue .val{color:#185FA5}
+.kpi.green .val{color:#3B6D11}
+.kpi.amber .val{color:#854F0B}
+.kpi.red .val{color:#A32D2D}
+.panel-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px;margin-bottom:8px}
+.panel{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem}
+.panel-full{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem;margin-bottom:8px}
+.panel-title{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.map-wrap{position:relative;width:100%;background:var(--color-background-secondary);border-radius:var(--border-radius-md);overflow:hidden}
+.map-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
+.leg-dot{width:10px;height:10px;border-radius:50%}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{font-size:11px;color:var(--color-text-secondary);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--color-background-secondary);border-radius:2px;height:14px;position:relative}
+.bar-fill{height:14px;border-radius:2px;transition:width .4s}
+.bar-val{font-size:11px;font-weight:500;color:var(--color-text-primary);width:42px;text-align:right;flex-shrink:0}
+.step-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.step-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px;text-align:center}
+.step-box .snum{font-size:10px;color:var(--color-text-secondary)}
+.step-box .sval{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.step-box .smin{font-size:10px;color:var(--color-text-secondary)}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.tbl th{text-align:left;padding:5px 6px;border-bottom:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);font-weight:500;white-space:nowrap}
+.tbl td{padding:5px 6px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:500}
+.badge.pass{background:#EAF3DE;color:#3B6D11}
+.badge.warn{background:#FAEEDA;color:#854F0B}
+.badge.fail{background:#FCEBEB;color:#A32D2D}
+.rica-pie{display:flex;align-items:center;gap:12px}
+.pie-wrap{flex-shrink:0}
+.pie-legend{flex:1}
+.pie-leg-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11px;color:var(--color-text-secondary)}
+.pie-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.chart-wrap{position:relative;width:100%;height:180px}
+</style>
+
+<div class="db">
+
+<div class="top-bar">
+  <div>
+    <h1>Rwanda Cross-Border Trade — Operations Dashboard</h1>
+    <div class="meta">Survey123 Connect · GIS-enabled · All border posts · April 2026</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:13px;font-weight:500;color:#fff">1,284</div>
+    <div class="meta">total transactions</div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <select id="fBorder" onchange="applyFilter()">
+    <option value="all">All border posts</option>
+    <option>Cyanika</option><option>Gatuna</option><option>Kagitumba</option>
+    <option>La Corniche</option><option>Nemba</option><option>Poids Lourds</option>
+    <option>Rusizi I</option><option>Rusizi II</option><option>Rusumo</option>
+  </select>
+  <select id="fDir" onchange="applyFilter()">
+    <option value="all">Import &amp; Export</option>
+    <option value="import">Import only</option>
+    <option value="export">Export only</option>
+  </select>
+  <select id="fMonth" onchange="applyFilter()">
+    <option value="all">All months</option>
+    <option>Jan 2026</option><option>Feb 2026</option><option>Mar 2026</option><option>Apr 2026</option>
+  </select>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi blue"><div class="lbl">Total transactions</div><div class="val" id="kTx">1,284</div><div class="sub">+8% vs last month</div></div>
+  <div class="kpi green"><div class="lbl">Total taxes collected</div><div class="val" id="kTax">RWF 2.4B</div><div class="sub">Avg RWF 1.87M / txn</div></div>
+  <div class="kpi amber"><div class="lbl">RICA approval rate</div><div class="val" id="kRica">91.2%</div><div class="sub">110 flagged this month</div></div>
+  <div class="kpi red"><div class="lbl">Avg processing time</div><div class="val" id="kTime">47 min</div><div class="sub">All 5 steps combined</div></div>
+</div>
+
+<div class="panel-full">
+  <div class="panel-title">Rwanda border posts — transaction volume &amp; trade flow map</div>
+  <div class="map-wrap" id="mapWrap">
+    <svg id="rwMap" viewBox="0 0 460 340" width="100%" style="display:block"></svg>
+  </div>
+  <div class="map-legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#185FA5"></div> High volume (&gt;150 txn)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#639922"></div> Medium (80–150 txn)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#EF9F27"></div> Lower (&lt;80 txn)</div>
+    <div class="leg-item"><svg width="16" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="16" y2="5" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="3,2"/></svg> Major import route</div>
+    <div class="leg-item"><svg width="16" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="16" y2="5" stroke="#1D9E75" stroke-width="1.5" stroke-dasharray="3,2"/></svg> Major export route</div>
+  </div>
+</div>
+
+<div class="panel-row">
+  <div class="panel">
+    <div class="panel-title">Transaction volume by border post</div>
+    <div id="borderBars"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">RICA inspection outcomes</div>
+    <div class="rica-pie">
+      <div class="pie-wrap"><canvas id="ricaPie" width="90" height="90" role="img" aria-label="Donut chart showing RICA outcomes: 91% approved, 5% quarantined, 3% re-exported, 1% destroyed">RICA outcomes.</canvas></div>
+      <div class="pie-legend" id="ricaLeg"></div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--color-text-secondary);">Based on Step 4 recorded outcomes across all border posts</div>
+  </div>
+</div>
+
+<div class="panel-row">
+  <div class="panel">
+    <div class="panel-title">Tax revenue by duty category (RWF millions)</div>
+    <div class="chart-wrap"><canvas id="taxChart" role="img" aria-label="Bar chart of tax revenue by duty category">Tax revenue data.</canvas></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Product categories — share of imports</div>
+    <div class="chart-wrap"><canvas id="catChart" role="img" aria-label="Horizontal bar chart of product categories">Product category data.</canvas></div>
+  </div>
+</div>
+
+<div class="panel-full">
+  <div class="panel-title">Avg processing time per step (minutes) — all borders</div>
+  <div class="step-grid">
+    <div class="step-box"><div class="snum">Step 1</div><div class="sval">17</div><div class="smin">Physical verification</div></div>
+    <div class="step-box"><div class="snum">Step 2</div><div class="sval">14</div><div class="smin">Declare cargo</div></div>
+    <div class="step-box"><div class="snum">Step 3</div><div class="sval">7</div><div class="smin">Pay taxes &amp; fees</div></div>
+    <div class="step-box"><div class="snum">Step 4</div><div class="sval">22</div><div class="smin">RICA inspection</div></div>
+    <div class="step-box"><div class="snum">Step 5</div><div class="sval">3</div><div class="smin">Goods exit note</div></div>
+  </div>
+  <div style="margin-top:8px;position:relative;width:100%;height:8px;background:var(--color-background-secondary);border-radius:4px">
+    <div style="position:absolute;left:0;top:0;height:8px;border-radius:4px 0 0 4px;background:#378ADD;width:27%"></div>
+    <div style="position:absolute;left:27%;top:0;height:8px;background:#639922;width:22%"></div>
+    <div style="position:absolute;left:49%;top:0;height:8px;background:#EF9F27;width:11%"></div>
+    <div style="position:absolute;left:60%;top:0;height:8px;background:#E24B4A;width:35%"></div>
+    <div style="position:absolute;left:95%;top:0;height:8px;border-radius:0 4px 4px 0;background:#888780;width:5%"></div>
+  </div>
+  <div style="margin-top:4px;font-size:10px;color:var(--color-text-tertiary)">Step 4 (RICA) is the longest bottleneck — 47% of total processing time</div>
+</div>
+
+<div class="panel-full">
+  <div class="panel-title">Recent transactions — all border posts</div>
+  <div style="overflow-x:auto">
+  <table class="tbl" id="txTable">
+    <thead>
+      <tr>
+        <th style="width:90px">Date</th>
+        <th style="width:100px">Border post</th>
+        <th style="width:60px">Direction</th>
+        <th style="width:130px">Product</th>
+        <th style="width:90px">CIF value (RWF)</th>
+        <th style="width:80px">Tax paid (RWF)</th>
+        <th style="width:70px">RICA outcome</th>
+        <th style="width:65px">Exit note</th>
+      </tr>
+    </thead>
+    <tbody id="txBody"></tbody>
+  </table>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+
+const borders = [
+  {name:"Gatuna",      x:220, y:62,  vol:218, imp:142, exp:76,  neighbor:"Uganda"},
+  {name:"Kagitumba",   x:298, y:98,  vol:176, imp:110, exp:66,  neighbor:"Uganda"},
+  {name:"Rusumo",      x:318, y:198, vol:164, imp:95,  exp:69,  neighbor:"Tanzania"},
+  {name:"Rusizi I",    x:80,  y:245, vol:152, imp:100, exp:52,  neighbor:"DRC"},
+  {name:"Rusizi II",   x:72,  y:270, vol:138, imp:88,  exp:50,  neighbor:"DRC"},
+  {name:"Cyanika",     x:105, y:138, vol:130, imp:80,  exp:50,  neighbor:"Uganda"},
+  {name:"Nemba",       x:192, y:82,  vol:118, imp:70,  exp:48,  neighbor:"Uganda"},
+  {name:"Poids Lourds",x:138, y:252, vol:96,  imp:60,  exp:36,  neighbor:"Burundi"},
+  {name:"La Corniche", x:118, y:272, vol:92,  imp:58,  exp:34,  neighbor:"Burundi"},
+];
+
+function volColor(v){return v>150?"#185FA5":v>80?"#639922":"#EF9F27";}
+function volR(v){return v>150?14:v>80?11:8;}
+
+const svg = document.getElementById("rwMap");
+const ns = "http://www.w3.org/2000/svg";
+
+function el(tag,attrs,txt){
+  const e=document.createElementNS(ns,tag);
+  for(const[k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+  if(txt) e.textContent=txt;
+  return e;
+}
+
+const rwandaPath = "M110,90 L175,68 L240,55 L310,80 L345,130 L360,185 L340,225 L310,260 L270,290 L220,310 L170,305 L120,285 L75,260 L52,215 L55,165 L78,125 Z";
+svg.appendChild(el("path",{d:rwandaPath,fill:"#E6F1FB",stroke:"#B5D4F4","stroke-width":"1.5"}));
+
+const labels=[
+  {t:"Uganda",x:235,y:38},{t:"Tanzania",x:355,y:215},{t:"DRC",x:28,y:220},{t:"Burundi",x:118,y:310}
+];
+labels.forEach(({t,x,y})=>{
+  svg.appendChild(el("text",{x,y,"font-size":"9","fill":"#888780","font-family":"sans-serif","text-anchor":"middle"},t));
+});
+
+const routes=[
+  {x1:220,y1:62,x2:220,y2:38,type:"imp"},
+  {x1:298,y1:98,x2:320,y2:75,type:"imp"},
+  {x1:318,y1:198,x2:355,y2:205,type:"exp"},
+  {x1:80,y1:245,x2:45,y2:230,type:"imp"},
+  {x1:138,y1:252,x2:118,y2:305,type:"exp"},
+];
+routes.forEach(({x1,y1,x2,y2,type})=>{
+  svg.appendChild(el("line",{x1,y1,x2,y2,stroke:type==="imp"?"#E24B4A":"#1D9E75","stroke-width":"1.2","stroke-dasharray":"3,2","opacity":"0.7"}));
+});
+
+borders.forEach(b=>{
+  const g=document.createElementNS(ns,"g");
+  g.style.cursor="pointer";
+  g.appendChild(el("circle",{cx:b.x,cy:b.y,r:volR(b.vol)+4,fill:volColor(b.vol),opacity:"0.15"}));
+  const circ=el("circle",{cx:b.x,cy:b.y,r:volR(b.vol),fill:volColor(b.vol),stroke:"#fff","stroke-width":"1.5"});
+  g.appendChild(circ);
+
+  const lx=b.x>250?b.x-6:b.x+volR(b.vol)+4;
+  const anchor=b.x>250?"end":"start";
+  const lbl=el("text",{x:lx,y:b.y+1,"font-size":"8.5","fill":"var(--color-text-primary)","font-family":"sans-serif","text-anchor":anchor,"font-weight":"500"},b.name);
+  g.appendChild(lbl);
+
+  const tooltip=el("title",{},`${b.name} | ${b.vol} txn | ${b.neighbor} | Import: ${b.imp} | Export: ${b.exp}`);
+  g.appendChild(tooltip);
+  svg.appendChild(g);
+});
+
+const volLabel=el("text",{x:4,y:330,"font-size":"8","fill":"#888780","font-family":"sans-serif"},`Rwanda — 9 border posts · ${borders.reduce((a,b)=>a+b.vol,0).toLocaleString()} total transactions`);
+svg.appendChild(volLabel);
+
+function buildBorderBars(){
+  const sorted=[...borders].sort((a,b)=>b.vol-a.vol);
+  const max=sorted[0].vol;
+  const div=document.getElementById("borderBars");
+  div.innerHTML="";
+  sorted.forEach(b=>{
+    div.innerHTML+=`<div class="bar-row">
+      <div class="bar-label" title="${b.name}">${b.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(b.vol/max*100)}%;background:${volColor(b.vol)}"></div></div>
+      <div class="bar-val">${b.vol}</div>
+    </div>`;
+  });
+}
+buildBorderBars();
+
+const ricaData=[
+  {label:"Approved",val:91,color:"#639922"},
+  {label:"Quarantined",val:5,color:"#EF9F27"},
+  {label:"Re-exported",val:3,color:"#E24B4A"},
+  {label:"Destroyed",val:1,color:"#A32D2D"},
+];
+const legDiv=document.getElementById("ricaLeg");
+ricaData.forEach(r=>{
+  legDiv.innerHTML+=`<div class="pie-leg-row"><div class="pie-swatch" style="background:${r.color}"></div><span>${r.label} — ${r.val}%</span></div>`;
+});
+new Chart(document.getElementById("ricaPie"),{
+  type:"doughnut",
+  data:{labels:ricaData.map(r=>r.label),datasets:[{data:ricaData.map(r=>r.val),backgroundColor:ricaData.map(r=>r.color),borderWidth:2,borderColor:"#fff"}]},
+  options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}},cutout:"62%"}
+});
+
+new Chart(document.getElementById("taxChart"),{
+  type:"bar",
+  data:{
+    labels:["Raw mat. 0%","Inter. 10%","Finished 25%","EAC exempt","COMESA"],
+    datasets:[
+      {label:"Import duty",data:[0,185,420,0,62],backgroundColor:"#185FA5",borderSkipped:false},
+      {label:"VAT (18%)",data:[0,133,302,0,45],backgroundColor:"#B5D4F4",borderSkipped:false},
+      {label:"Levies",data:[8,22,58,4,9],backgroundColor:"#EF9F27",borderSkipped:false}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:"index"}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},autoSkip:false,maxRotation:30}},y:{stacked:true,ticks:{font:{size:9},callback:v=>"RWF "+v+"M"}}},
+  }
+});
+
+new Chart(document.getElementById("catChart"),{
+  type:"bar",
+  data:{
+    labels:["Food & bev.","Agri. produce","Textiles","Animal prod.","Electronics","Building mat.","Raw materials","Other"],
+    datasets:[{
+      label:"Share (%)",
+      data:[28,22,14,12,9,7,5,3],
+      backgroundColor:"#185FA5",
+      borderSkipped:false,
+    }]
+  },
+  options:{
+    indexAxis:"y",
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{ticks:{font:{size:9},callback:v=>v+"%"},max:35},
+      y:{ticks:{font:{size:9}}}
+    }
+  }
+});
+
+const txData=[
+  {date:"23 Apr 2026",border:"Gatuna",dir:"Import",product:"Food & bev.",cif:"1,250,000",tax:"312,500",rica:"Approved",exit:"Yes"},
+  {date:"23 Apr 2026",border:"Rusizi I",dir:"Import",product:"Animal prod.",cif:"980,000",tax:"245,000",rica:"Approved",exit:"Yes"},
+  {date:"22 Apr 2026",border:"Rusumo",dir:"Export",product:"Agri. produce",cif:"560,000",tax:"14,000",rica:"Approved",exit:"Yes"},
+  {date:"22 Apr 2026",border:"Kagitumba",dir:"Import",product:"Electronics",cif:"3,400,000",tax:"850,000",rica:"Quarantine",exit:"No"},
+  {date:"22 Apr 2026",border:"Nemba",dir:"Import",product:"Textiles",cif:"720,000",tax:"180,000",rica:"Approved",exit:"Yes"},
+  {date:"21 Apr 2026",border:"Cyanika",dir:"Import",product:"Building mat.",cif:"1,100,000",tax:"275,000",rica:"Re-export",exit:"No"},
+  {date:"21 Apr 2026",border:"Poids Lourds",dir:"Export",product:"Food & bev.",cif:"440,000",tax:"11,000",rica:"Approved",exit:"Yes"},
+  {date:"20 Apr 2026",border:"La Corniche",dir:"Import",product:"Raw materials",cif:"890,000",tax:"0",rica:"Approved",exit:"Yes"},
+  {date:"20 Apr 2026",border:"Rusizi II",dir:"Import",product:"Agri. produce",cif:"670,000",tax:"167,500",rica:"Approved",exit:"Yes"},
+  {date:"19 Apr 2026",border:"Gatuna",dir:"Import",product:"Animal prod.",cif:"2,100,000",tax:"525,000",rica:"Approved",exit:"Yes"},
+];
+
+function ricaBadge(v){
+  if(v==="Approved") return `<span class="badge pass">Approved</span>`;
+  if(v==="Quarantine") return `<span class="badge warn">Quarantine</span>`;
+  return `<span class="badge fail">${v}</span>`;
+}
+function exitBadge(v){
+  return v==="Yes"?`<span class="badge pass">Issued</span>`:`<span class="badge fail">Pending</span>`;
+}
+
+const tbody=document.getElementById("txBody");
+txData.forEach(r=>{
+  tbody.innerHTML+=`<tr>
+    <td>${r.date}</td>
+    <td>${r.border}</td>
+    <td style="color:${r.dir==='Import'?'#185FA5':'#3B6D11'};font-weight:500">${r.dir}</td>
+    <td>${r.product}</td>
+    <td style="text-align:right">${r.cif}</td>
+    <td style="text-align:right">${r.tax}</td>
+    <td>${ricaBadge(r.rica)}</td>
+    <td>${exitBadge(r.exit)}</td>
+  </tr>`;
+});
+
+function applyFilter(){
+  const b=document.getElementById("fBorder").value;
+  const d=document.getElementById("fDir").value;
+  document.querySelectorAll("#txBody tr").forEach(tr=>{
+    const tds=[...tr.querySelectorAll("td")];
+    const border=tds[1]?.textContent||"";
+    const dir=tds[2]?.textContent.toLowerCase()||"";
+    const bMatch=b==="all"||border.includes(b);
+    const dMatch=d==="all"||dir===d;
+    tr.style.display=(bMatch&&dMatch)?"":"none";
+  });
+}
+</script>
