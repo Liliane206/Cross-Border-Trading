@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cross-Border Trading Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F0EEE6;font-size:12px;height:100vh;overflow:hidden}
+.wrap{display:flex;height:100vh;gap:0}
+
+/* ── SIDEBAR ── */
+.kpi-col{width:235px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid #E2E0D8}
+.kpi-head{background:#CDAB00;color:#3C2800;font-size:15px;font-weight:700;text-align:center;padding:10px 6px;letter-spacing:.01em;flex-shrink:0}
+.kpi-item{flex:1;padding:9px 14px;border-bottom:1px solid #EDEBE3;display:flex;flex-direction:column;justify-content:center}
+.kpi-item:last-child{border-bottom:none}
+.kpi-val{font-size:24px;font-weight:700;color:#111;line-height:1.05}
+.kpi-val.sm{font-size:17px}
+.kpi-lbl{font-size:10px;color:#888;margin-top:3px}
+.kpi-trend{font-size:9.5px;margin-top:2px}
+.up{color:#1D9E75}.dn{color:#C44000}
+.kpi-ring{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;border-bottom:1px solid #EDEBE3}
+.kpi-ring-lbl{font-size:10px;color:#888;margin-top:4px;text-align:center;font-weight:500}
+
+/* ── RIGHT ── */
+.right{flex:1;display:flex;flex-direction:column;gap:5px;padding:6px;min-width:0;overflow:hidden}
+
+/* Title */
+.title-block{background:#fff;padding:9px 14px;flex-shrink:0;border-left:4px solid #CDAB00;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.title-block h1{font-size:17px;font-weight:700;color:#111;margin-bottom:2px}
+.title-block p{font-size:9px;color:#888;line-height:1.55}
+.bp-select{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.bp-select label{font-size:9px;color:#888;font-weight:500;letter-spacing:.02em;text-transform:uppercase}
+.bp-select select{font-size:11px;font-weight:600;padding:5px 10px;border-radius:5px;border:1.5px solid #CDAB00;background:#FFFAE8;color:#3C2800;cursor:pointer;min-width:170px;height:30px}
+.bp-select select:focus{outline:none;border-color:#A08000}
+
+/* Chart rows */
+.r1{display:flex;gap:5px;flex:5;min-height:0}
+.r2{display:flex;gap:5px;flex:5;min-height:0}
+.r3{display:flex;gap:5px;flex:4;min-height:0}
+.panel{background:#fff;display:flex;flex-direction:column;min-width:0;padding:7px 9px}
+.ph{font-size:10.5px;font-weight:700;color:#111;padding-bottom:4px;margin-bottom:4px;border-bottom:1px solid #EDEBE3;flex-shrink:0}
+
+/* Horizontal legend (RICA) */
+.legr-h{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:#444;margin-bottom:5px;justify-content:center;flex-shrink:0;font-weight:500}
+/* Vertical legend (Product Cat) */
+.legr-v{display:flex;flex-direction:column;gap:7px;justify-content:center;font-size:11px;color:#333;min-width:155px}
+.li{display:flex;align-items:center;gap:5px}
+.ld{width:11px;height:11px;border-radius:2px;flex-shrink:0;display:inline-block}
+/* Bar chart horizontal legend */
+.legr-bar{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:#444;margin-bottom:5px;justify-content:center;flex-shrink:0;font-weight:500}
+
+.cw{position:relative;flex:1;min-height:0}
+/* RICA donut layout: donut centered, legend beside */
+.rica-row{display:flex;align-items:center;gap:10px;flex:1;min-height:0}
+/* Product cat layout: donut + vertical legend */
+.prod-row{display:flex;align-items:center;gap:12px;flex:1;min-height:0}
+.gctr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ════════ SIDEBAR ════════ -->
+<div class="kpi-col">
+  <div class="kpi-head">Survey Overview</div>
+
+  <div class="kpi-item">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="kpi-val" id="s-txn">342</div>
+      <div style="text-align:right;font-size:9.5px;line-height:1.6;margin-top:2px">
+        YOY<br><span class="up" id="s-yoy">+12% &#9650;</span>
+      </div>
+    </div>
+    <div class="kpi-lbl">Total Transactions</div>
+  </div>
+
+  <div class="kpi-item">
+    <div class="kpi-val sm" id="s-tax">RWF 124M</div>
+    <div class="kpi-trend up" id="s-tax-trend">&#9650; +9% vs prior period</div>
+    <div class="kpi-lbl">Total Taxes Collected</div>
+  </div>
+
+  <div class="kpi-ring">
+    <svg width="80" height="80" viewBox="0 0 80 80" id="s-ring-svg">
+      <circle cx="40" cy="40" r="30" fill="none" stroke="#F0DC90" stroke-width="12"/>
+      <circle cx="40" cy="40" r="30" fill="none" stroke="#CDAB00" stroke-width="12"
+        id="s-ring-arc"
+        stroke-dasharray="140.4 47.1" stroke-dashoffset="0"
+        transform="rotate(-90 40 40)"/>
+      <text x="40" y="45" text-anchor="middle"
+        style="font-size:14px;font-weight:800;fill:#111" id="s-ring-val">74%</text>
+    </svg>
+    <div class="kpi-ring-lbl">RICA Approval Rate</div>
+  </div>
+
+  <div class="kpi-item">
+    <div class="kpi-val sm" id="s-cif">RWF 2.48M</div>
+    <div class="kpi-lbl">Average CIF per Transaction</div>
+  </div>
+
+  <div class="kpi-item">
+    <div class="kpi-val" style="font-size:18px" id="s-time">67 min</div>
+    <div class="kpi-trend dn" id="s-time-trend">&#9660; Above 63 min goal</div>
+    <div class="kpi-lbl">Average Total Process Time</div>
+  </div>
+</div>
+
+<!-- ════════ RIGHT ════════ -->
+<div class="right">
+
+  <!-- Title + Border Post Selector -->
+  <div class="title-block">
+    <div>
+      <h1>Cross-Border Trading Dashboard</h1>
+      <p>Rwanda cross-border trade monitoring &bull; 9 active border posts &bull; Survey123 Connect &bull; n = 342 submissions</p>
+    </div>
+    <div class="bp-select">
+      <label>Filter by Border Post</label>
+      <select id="bp-filter" onchange="applyFilter()">
+        <option value="all">All Border Posts</option>
+        <option value="0">Rusizi II</option>
+        <option value="1">Gatuna</option>
+        <option value="2">Rusumo</option>
+        <option value="3">Rusizi I</option>
+        <option value="4">Kagitumba</option>
+        <option value="5">Poids Lourds</option>
+        <option value="6">Cyanika</option>
+        <option value="7">Nemba</option>
+        <option value="8">La Corniche</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ROW 1 -->
+  <div class="r1">
+    <div class="panel" style="flex:11">
+      <div class="ph" id="ph-c1">Transaction Volume by Border Post</div>
+      <div class="legr-bar">
+        <span class="li"><span class="ld" style="background:#CDAB00"></span>High Volume (&ge;46)</span>
+        <span class="li"><span class="ld" style="background:#9C8200"></span>Medium (28&ndash;45)</span>
+        <span class="li"><span class="ld" style="background:#6B5C00"></span>Lower (&lt;28)</span>
+      </div>
+      <div class="cw"><canvas id="c1"></canvas></div>
+    </div>
+
+    <div class="panel" style="flex:9">
+      <div class="ph">RICA Inspection Outcomes</div>
+      <!-- HORIZONTAL legend for RICA -->
+      <div class="legr-h">
+        <span class="li"><span class="ld" style="background:#1D9E75"></span>Approved</span>
+        <span class="li"><span class="ld" style="background:#CDAB00"></span>Quarantined</span>
+        <span class="li"><span class="ld" style="background:#D85A30"></span>Re-exported</span>
+        <span class="li"><span class="ld" style="background:#E24B4A"></span>Destroyed</span>
+      </div>
+      <div class="rica-row">
+        <canvas id="c2" width="140" height="140"></canvas>
+        <div id="c2l" style="flex:1;display:flex;flex-direction:column;gap:8px;justify-content:center"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+  <div class="r2">
+    <div class="panel" style="flex:10">
+      <div class="ph">Tax Revenue by Duty Category (RWF Millions)</div>
+      <div class="legr-bar">
+        <span class="li"><span class="ld" style="background:#CDAB00"></span>Finished Goods 25%</span>
+        <span class="li"><span class="ld" style="background:#9C8200"></span>Intermediate Goods 10%</span>
+        <span class="li"><span class="ld" style="background:#D85A30"></span>COMESA C Partial</span>
+        <span class="li"><span class="ld" style="background:#BA7517"></span>COMESA B Reduced</span>
+      </div>
+      <div class="cw"><canvas id="c3"></canvas></div>
+    </div>
+
+    <div class="panel" style="flex:9">
+      <div class="ph">Product Categories — Share of Imports</div>
+      <!-- No horizontal legend here; vertical legend is beside the donut -->
+      <div class="prod-row">
+        <canvas id="c4" width="140" height="140"></canvas>
+        <!-- VERTICAL legend for Product Categories -->
+        <div class="legr-v" id="c4l"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="flex:5">
+      <div class="ph" style="text-align:center">Average Total Processing Time</div>
+      <div class="gctr">
+        <svg id="g1" viewBox="0 0 160 94" style="width:148px;height:87px;display:block"></svg>
+        <div style="font-size:9px;color:#aaa;text-align:center;margin-top:3px">All borders combined</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3 -->
+  <div class="r3">
+    <div class="panel" style="flex:11">
+      <div class="ph" id="ph-c5">Average Processing Time per Step — All Borders (minutes)</div>
+      <div class="legr-bar" id="leg-c5">
+        <span class="li"><span class="ld" style="background:#CDAB00"></span>Step 1 Verification</span>
+        <span class="li"><span class="ld" style="background:#9C8200"></span>Step 2 Declaration</span>
+        <span class="li"><span class="ld" style="background:#1D9E75"></span>Step 3 Tax Payment</span>
+        <span class="li"><span class="ld" style="background:#D85A30"></span>Step 4 RICA Inspection</span>
+        <span class="li"><span class="ld" style="background:#378ADD"></span>Step 5 Exit Note</span>
+      </div>
+      <div class="cw"><canvas id="c5"></canvas></div>
+    </div>
+
+    <div class="panel" style="flex:5">
+      <div class="ph" style="text-align:center">RICA Approval Rate</div>
+      <div class="gctr">
+        <svg id="g2" viewBox="0 0 160 94" style="width:148px;height:87px;display:block"></svg>
+        <div style="font-size:9px;color:#aaa;text-align:center;margin-top:3px">2025 baseline: 68%</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA — per border post
+══════════════════════════════════════════ */
+const GOLD='#CDAB00',MID='#9C8200',DRK='#6B5C00';
+const GRN='#1D9E75',RED='#D85A30',BLU='#378ADD',ORG='#BA7517',SCR='#E24B4A';
+
+const BP_NAMES=['Rusizi II','Gatuna','Rusumo','Rusizi I','Kagitumba','Poids Lourds','Cyanika','Nemba','La Corniche'];
+const BP_SHORT=['Rusizi II','Gatuna','Rusumo','Rusizi I','Kagitumba','P. Lourds','Cyanika','Nemba','La Corniche'];
+
+// All-border aggregates
+const ALL={
+  txn:342, tax:'RWF 124M', cif:'RWF 2.48M', ricaRate:74, time:67, timeGood:false,
+  bpVol:[55,52,50,46,38,31,28,24,18],
+  rica:[254,64,17,7],
+  duty:[42.5,18.2,7.8,4.1],
+  prod:[72,65,48,38,34,29,19],
+  step1:[19,17,18,20,16,21,18,22,15],
+  step2:[14,16,15,13,17,14,16,13,18],
+  step3:[8,7,9,8,6,9,7,8,9],
+  step4:[23,21,22,24,20,25,22,19,24],
+  step5:[4,3,5,4,3,4,5,3,4],
+};
+
+// Per-border data [Rusizi II, Gatuna, Rusumo, Rusizi I, Kagitumba, Poids Lourds, Cyanika, Nemba, La Corniche]
+const PER=[
+  {txn:55, tax:'RWF 22.4M', cif:'RWF 3.12M', ricaRate:76, time:64, timeGood:true,
+   rica:[42,10,2,1], duty:[8.2,4.1,1.8,0.9],
+   prod:[14,12,10,8,6,3,2], steps:[19,14,8,23,4]},
+  {txn:52, tax:'RWF 20.1M', cif:'RWF 2.98M', ricaRate:73, time:68, timeGood:false,
+   rica:[38,11,2,1], duty:[7.8,3.8,1.5,0.8],
+   prod:[13,11,9,7,6,4,2], steps:[17,16,7,21,3]},
+  {txn:50, tax:'RWF 19.5M', cif:'RWF 2.75M', ricaRate:74, time:70, timeGood:false,
+   rica:[37,10,2,1], duty:[7.2,3.6,1.4,0.7],
+   prod:[12,10,9,8,5,4,2], steps:[18,15,9,22,5]},
+  {txn:46, tax:'RWF 17.8M', cif:'RWF 2.60M', ricaRate:71, time:65, timeGood:false,
+   rica:[33,10,2,1], duty:[6.5,3.2,1.3,0.6],
+   prod:[11,10,8,7,5,3,2], steps:[20,13,8,24,4]},
+  {txn:38, tax:'RWF 13.2M', cif:'RWF 2.40M', ricaRate:76, time:62, timeGood:true,
+   rica:[29,7,1,1], duty:[4.8,2.4,1.0,0.5],
+   prod:[9,8,7,5,5,2,2], steps:[16,17,6,20,3]},
+  {txn:31, tax:'RWF 11.5M', cif:'RWF 2.85M', ricaRate:71, time:69, timeGood:false,
+   rica:[22,7,1,1], duty:[4.2,2.0,0.9,0.4],
+   prod:[8,7,6,4,4,2,0], steps:[21,14,9,25,4]},
+  {txn:28, tax:'RWF 9.4M',  cif:'RWF 2.15M', ricaRate:79, time:60, timeGood:true,
+   rica:[22,5,1,0], duty:[3.4,1.7,0.7,0.3],
+   prod:[7,6,5,4,3,2,1], steps:[18,16,7,22,5]},
+  {txn:24, tax:'RWF 7.8M',  cif:'RWF 2.30M', ricaRate:72, time:66, timeGood:false,
+   rica:[17,5,1,1], duty:[2.8,1.4,0.6,0.3],
+   prod:[6,5,4,4,3,1,1], steps:[22,13,8,19,3]},
+  {txn:18, tax:'RWF 5.6M',  cif:'RWF 2.05M', ricaRate:72, time:67, timeGood:false,
+   rica:[13,4,1,0], duty:[2.2,1.1,0.5,0.2],
+   prod:[5,4,3,3,2,1,0], steps:[15,18,9,24,4]},
+];
+
+const PROD_LABELS=['Food & Beverages','Agricultural Produce','Finished Goods','Building Materials','Raw Materials','Textiles','Other'];
+const PROD_COLORS=[GOLD,GRN,BLU,ORG,'#639922','#7F77DD','#888780'];
+const RICA_LABELS=['Approved','Quarantined','Re-exported','Destroyed'];
+const RICA_COLORS=[GRN,GOLD,RED,SCR];
+const DUTY_LABELS=['Finished Goods 25%','Intermediate Goods 10%','COMESA C Partial','COMESA B Reduced'];
+const DUTY_COLORS=[GOLD,MID,RED,ORG];
+const STEP_LABELS=['Step 1','Step 2','Step 3','Step 4','Step 5'];
+const STEP_COLORS=[GOLD,MID,GRN,RED,BLU];
+
+const BASE={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+
+/* ══════════════════════════════════════════
+   BUILD CHARTS
+══════════════════════════════════════════ */
+
+// C1 — Transaction Volume by Border Post
+const bpColors=ALL.bpVol.map(v=>v>=46?GOLD:v>=28?MID:DRK);
+const ch1=new Chart('c1',{type:'bar',
+  data:{labels:BP_NAMES,datasets:[{data:[...ALL.bpVol],backgroundColor:[...bpColors],borderRadius:3,borderWidth:0}]},
+  options:{...BASE,scales:{
+    x:{ticks:{font:{size:8.5},maxRotation:32},grid:{display:false}},
+    y:{ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,0.06)'},beginAtZero:true,suggestedMax:65}
+  }},
+  plugins:[{afterDatasetsDraw(ch){
+    const ctx=ch.ctx,m=ch.getDatasetMeta(0);
+    ctx.save();ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillStyle='#555';
+    ch.data.datasets[0].data.forEach((v,i)=>{const b=m.data[i];if(b)ctx.fillText(v,b.x,b.y-3);});
+    ctx.restore();
+  }}]
+});
+
+// C2 — RICA Outcomes donut
+const ch2=new Chart('c2',{type:'doughnut',
+  data:{labels:RICA_LABELS,datasets:[{data:[...ALL.rica],backgroundColor:RICA_COLORS,borderWidth:3,borderColor:'#fff'}]},
+  options:{responsive:false,cutout:'60%',plugins:{legend:{display:false}}}});
+
+function buildRicaLegend(vals){
+  const tot=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('c2l').innerHTML=RICA_LABELS.map((l,i)=>`
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="width:12px;height:12px;background:${RICA_COLORS[i]};border-radius:3px;flex-shrink:0"></span>
+      <span style="line-height:1.4;font-size:11px;color:#333">${l}<br>
+        <b style="color:#111;font-size:13px">${vals[i]}</b>
+        <span style="color:#999;font-size:10px"> (${Math.round(vals[i]/tot*100)}%)</span>
+      </span>
+    </div>`).join('');
+}
+buildRicaLegend(ALL.rica);
+
+// C3 — Tax Revenue (horizontal bars)
+const ch3=new Chart('c3',{type:'bar',
+  data:{labels:DUTY_LABELS,datasets:[{data:[...ALL.duty],backgroundColor:DUTY_COLORS,borderRadius:3,borderWidth:0}]},
+  options:{...BASE,indexAxis:'y',scales:{
+    x:{ticks:{font:{size:8.5},callback:v=>'RWF '+v+'M'},grid:{color:'rgba(0,0,0,0.06)'}},
+    y:{ticks:{font:{size:9}},grid:{display:false}}
+  },plugins:{...BASE.plugins,tooltip:{callbacks:{label:i=>'RWF '+i.raw+'M'}}}},
+  plugins:[{afterDatasetsDraw(ch){
+    const ctx=ch.ctx,m=ch.getDatasetMeta(0);
+    ctx.save();ctx.font='bold 9px sans-serif';ctx.textAlign='right';ctx.fillStyle='#fff';
+    ch.data.datasets[0].data.forEach((v,i)=>{const b=m.data[i];if(b&&v>0)ctx.fillText('RWF '+v+'M',b.x-5,b.y+4);});
+    ctx.restore();
+  }}]
+});
+
+// C4 — Product share donut + VERTICAL legend
+const ch4=new Chart('c4',{type:'doughnut',
+  data:{labels:PROD_LABELS,datasets:[{data:[...ALL.prod],backgroundColor:PROD_COLORS,borderWidth:3,borderColor:'#fff'}]},
+  options:{responsive:false,cutout:'56%',plugins:{legend:{display:false}}}});
+
+function buildProdLegend(vals){
+  const tot=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('c4l').innerHTML=PROD_LABELS.map((l,i)=>`
+    <div class="li">
+      <span class="ld" style="background:${PROD_COLORS[i]}"></span>
+      <span style="font-size:11px;color:#333;line-height:1.35">${l}<br>
+        <b style="color:#111;font-size:12px">${vals[i]}</b>
+        <span style="color:#999;font-size:10px"> &nbsp;${Math.round(vals[i]/tot*100)}%</span>
+      </span>
+    </div>`).join('');
+}
+buildProdLegend(ALL.prod);
+
+// C5 — Grouped processing time (all borders mode)
+let ch5=null;
+function buildC5All(){
+  if(ch5)ch5.destroy();
+  document.getElementById('ph-c5').textContent='Average Processing Time per Step — All Borders (minutes)';
+  document.getElementById('leg-c5').style.display='';
+  ch5=new Chart('c5',{type:'bar',
+    data:{labels:BP_SHORT,datasets:STEP_LABELS.map((l,i)=>({
+      label:l,data:ALL['step'+(i+1)],backgroundColor:STEP_COLORS[i],
+      borderRadius:2,borderWidth:0,barPercentage:0.82,categoryPercentage:0.78
+    }))},
+    options:{...BASE,scales:{
+      x:{ticks:{font:{size:8},maxRotation:30},grid:{display:false}},
+      y:{ticks:{font:{size:9},callback:v=>v+'m'},grid:{color:'rgba(0,0,0,0.06)'},beginAtZero:true,suggestedMax:32}
+    },plugins:{legend:{display:false},tooltip:{callbacks:{
+      title:t=>t[0].label+' — '+t[0].dataset.label,
+      label:i=>i.raw+' min average'
+    }}}}
+  });
+}
+
+function buildC5Border(idx){
+  if(ch5)ch5.destroy();
+  const name=BP_NAMES[idx];
+  document.getElementById('ph-c5').textContent=`Average Processing Time per Step — ${name} (minutes)`;
+  document.getElementById('leg-c5').style.display='none';
+  const vals=PER[idx].steps;
+  ch5=new Chart('c5',{type:'bar',
+    data:{labels:STEP_LABELS,datasets:[{
+      data:vals,backgroundColor:STEP_COLORS,borderRadius:4,borderWidth:0
+    }]},
+    options:{...BASE,scales:{
+      x:{ticks:{font:{size:10}},grid:{display:false}},
+      y:{ticks:{font:{size:9},callback:v=>v+'m'},grid:{color:'rgba(0,0,0,0.06)'},beginAtZero:true,suggestedMax:32}
+    },plugins:{...BASE.plugins,tooltip:{callbacks:{label:i=>i.raw+' min average'}}}},
+    plugins:[{afterDatasetsDraw(ch){
+      const ctx=ch.ctx,m=ch.getDatasetMeta(0);
+      ctx.save();ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.fillStyle='#333';
+      vals.forEach((v,i)=>{const b=m.data[i];if(b)ctx.fillText(v+'m',b.x,b.y-4);});
+      ctx.restore();
+    }}]
+  });
+}
+buildC5All();
+
+/* ══════════════════════════════════════════
+   GAUGES
+══════════════════════════════════════════ */
+function drawGauge(svgId,val,max,unit,sub){
+  const el=document.getElementById(svgId);
+  const cx=80,cy=78,r=55;
+  function pt(a,rd){rd=rd===undefined?r:rd;return[(cx+rd*Math.cos(a)).toFixed(2),(cy-rd*Math.sin(a)).toFixed(2)]}
+  const ratio=Math.min(val/max,1);
+  const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 1 0 ${cx+r} ${cy}`;
+  const va=Math.PI*(1-ratio);const[ex,ey]=pt(va);
+  const fill=`M ${cx-r} ${cy} A ${r} ${r} 0 ${ratio>0.5?1:0} 0 ${ex} ${ey}`;
+  const[nx,ny]=pt(va,r-9);
+  const display=unit==='%'?val+unit:val+' '+unit;
+  el.innerHTML=`
+    <path d="${bg}" fill="none" stroke="#F0DC90" stroke-width="13" stroke-linecap="round"/>
+    ${ratio>0?`<path d="${fill}" fill="none" stroke="${GOLD}" stroke-width="13" stroke-linecap="round"/>`:''}
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#444" stroke-width="2.5"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#333"/>
+    <text x="${cx-r-8}" y="${cy+5}" text-anchor="middle" font-size="9" fill="#bbb">0</text>
+    <text x="${cx+r+8}" y="${cy+5}" text-anchor="middle" font-size="9" fill="#bbb">${max}${unit}</text>
+    <text x="${cx}" y="${cy-20}" text-anchor="middle" font-size="24" font-weight="800" fill="#111">${display}</text>
+    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="9.5" fill="#999">${sub}</text>`;
+}
+drawGauge('g1',67,120,'min','average process time');
+drawGauge('g2',74,100,'%','approval rate');
+
+/* ══════════════════════════════════════════
+   SIDEBAR ring helper
+══════════════════════════════════════════ */
+function updateRing(pct){
+  const circ=2*Math.PI*30; // r=30
+  const filled=circ*(pct/100);
+  const gap=circ-filled;
+  document.getElementById('s-ring-arc').setAttribute('stroke-dasharray',filled.toFixed(1)+' '+gap.toFixed(1));
+  document.getElementById('s-ring-val').textContent=pct+'%';
+}
+
+/* ══════════════════════════════════════════
+   FILTER FUNCTION
+══════════════════════════════════════════ */
+function applyFilter(){
+  const sel=document.getElementById('bp-filter').value;
+
+  if(sel==='all'){
+    // ── Sidebar ──
+    document.getElementById('s-txn').textContent='342';
+    document.getElementById('s-yoy').innerHTML='+12% &#9650;';
+    document.getElementById('s-tax').textContent='RWF 124M';
+    document.getElementById('s-tax-trend').innerHTML='&#9650; +9% vs prior period';
+    document.getElementById('s-tax-trend').className='kpi-trend up';
+    document.getElementById('s-cif').textContent='RWF 2.48M';
+    document.getElementById('s-time').textContent='67 min';
+    document.getElementById('s-time-trend').innerHTML='&#9660; Above 63 min goal';
+    document.getElementById('s-time-trend').className='kpi-trend dn';
+    updateRing(74);
+
+    // ── C1 ──
+    document.getElementById('ph-c1').textContent='Transaction Volume by Border Post';
+    ch1.data.labels=BP_NAMES;
+    ch1.data.datasets[0].data=[...ALL.bpVol];
+    ch1.data.datasets[0].backgroundColor=ALL.bpVol.map(v=>v>=46?GOLD:v>=28?MID:DRK);
+    ch1.update();
+
+    // ── C2 ──
+    ch2.data.datasets[0].data=[...ALL.rica];ch2.update();
+    buildRicaLegend(ALL.rica);
+
+    // ── C3 ──
+    ch3.data.datasets[0].data=[...ALL.duty];ch3.update();
+
+    // ── C4 ──
+    ch4.data.datasets[0].data=[...ALL.prod];ch4.update();
+    buildProdLegend(ALL.prod);
+
+    // ── C5 ──
+    buildC5All();
+
+    // ── Gauges ──
+    drawGauge('g1',67,120,'min','average process time');
+    drawGauge('g2',74,100,'%','approval rate');
+
+  } else {
+    const idx=parseInt(sel);
+    const d=PER[idx];
+    const name=BP_NAMES[idx];
+
+    // ── Sidebar ──
+    document.getElementById('s-txn').textContent=d.txn;
+    document.getElementById('s-yoy').textContent='';
+    document.getElementById('s-tax').textContent=d.tax;
+    document.getElementById('s-tax-trend').textContent='';
+    document.getElementById('s-cif').textContent=d.cif;
+    document.getElementById('s-time').textContent=d.time+' min';
+    const tEl=document.getElementById('s-time-trend');
+    tEl.innerHTML=d.timeGood?'&#9650; Below 63 min goal':'&#9660; Above 63 min goal';
+    tEl.className=d.timeGood?'kpi-trend up':'kpi-trend dn';
+    updateRing(d.ricaRate);
+
+    // ── C1: Highlight selected border ──
+    document.getElementById('ph-c1').textContent=`Transaction Volume — ${name} highlighted`;
+    ch1.data.labels=BP_NAMES;
+    ch1.data.datasets[0].data=[...ALL.bpVol];
+    ch1.data.datasets[0].backgroundColor=BP_NAMES.map((_,i)=>i===idx?GOLD:'#E8E4D8');
+    ch1.update();
+
+    // ── C2 ──
+    ch2.data.datasets[0].data=[...d.rica];ch2.update();
+    buildRicaLegend(d.rica);
+
+    // ── C3 ──
+    ch3.data.datasets[0].data=[...d.duty];ch3.update();
+
+    // ── C4 ──
+    ch4.data.datasets[0].data=[...d.prod];ch4.update();
+    buildProdLegend(d.prod);
+
+    // ── C5: single border, 5 steps ──
+    buildC5Border(idx);
+
+    // ── Gauges ──
+    drawGauge('g1',d.time,120,'min','average process time');
+    drawGauge('g2',d.ricaRate,100,'%','approval rate');
+  }
+}
+</script>
+</body>
+</html>
